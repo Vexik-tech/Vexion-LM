@@ -23,28 +23,24 @@ import argparse
 def generate(model, tokenizer, prompt, max_new_tokens=100, temperature=1.0, top_k=None, top_p=None, repetition_penalty=1.2, device='cuda'):
     model.eval()
     
-    # Ищем ID стоп-токена один раз в начале
     stop_token_id = tokenizer.token_to_id("<|end|>")
     
     encoding = tokenizer.encode(prompt)
     input_ids = torch.tensor(encoding.ids, dtype=torch.long, device=device).unsqueeze(0)
 
     with torch.no_grad():
-        # Используем твой текущий цикл генерации
         for _ in range(max_new_tokens):
             if input_ids.size(1) > model.config.max_seq_len:
                 input_ids = input_ids[:, -model.config.max_seq_len:]
             
             logits, _ = model(input_ids)
             logits = logits[:, -1, :].float() 
-            
-            # Твоя логика штрафов за повторения
+        
             if repetition_penalty != 1.0:
                 for i in range(input_ids.size(0)):
                     for token_id in set(input_ids[i].tolist()):
                         logits[i, token_id] /= repetition_penalty
 
-            # Твоя логика сэмплирования (Temperature / Top-K / Top-P)
             logits = logits / (temperature if temperature > 0 else 1.0)
             
             if top_k is not None:
@@ -63,12 +59,9 @@ def generate(model, tokenizer, prompt, max_new_tokens=100, temperature=1.0, top_
             probs = F.softmax(logits, dim=-1)
             next_token = torch.multinomial(probs, num_samples=1)
 
-            # --- ВОТ ЭТО ГЛАВНОЕ ДОБАВЛЕНИЕ ---
-            # Если модель выплюнула <|end|>, мы немедленно прекращаем цикл
             if next_token.item() == stop_token_id:
                 break
             
-            # Печатаем токен сразу (Streaming)
             print(tokenizer.decode([next_token.item()]), end="", flush=True)
 
             input_ids = torch.cat((input_ids, next_token), dim=1)
@@ -77,7 +70,6 @@ def generate(model, tokenizer, prompt, max_new_tokens=100, temperature=1.0, top_
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # Сохраняем все твои аргументы
     parser.add_argument('--checkpoint', type=str, required=True)
     parser.add_argument('--max_new_tokens', type=int, default=1000)
     parser.add_argument('--temperature', type=float, default=0.7)
@@ -90,10 +82,9 @@ if __name__ == "__main__":
 
     tokenizer = Tokenizer.from_file(args.tokenizer)
 
-    # Используем твой конфиг (обязательно укажи актуальные параметры MoE)
     config = GPTConfig(
-        vocab_size=32064, # Твой новый расширенный словарь
-        embed_dim=768,    # Твои параметры
+        vocab_size=32064, 
+        embed_dim=768,    
         n_layers=12,
         n_heads=12,
         num_experts=4,
@@ -104,19 +95,17 @@ if __name__ == "__main__":
     load_model(model, args.checkpoint)
     model.to(args.device)
 
-    # Системный промпт — это "прошивка" поведения модели
     system_prompt = "<|system|> Ты Vexion-LM, опытный инженер и ИИ-ассистент. Отвечай технически грамотно. <|end|>\n"
     
-    print("🚀 Vexion-LM готова. Введи запрос:")
+    print("Vexion-LM готова. Введи запрос:")
     
     while True:
-        user_input = input("\n👤 Юзер: ")
+        user_input = input("\n Юзер: ")
         if user_input.lower() in ['exit', 'quit']: break
         
-        # Оборачиваем ввод пользователя в шаблон
         full_prompt = f"{system_prompt}<|user|> {user_input} <|end|>\n<|assistant|> "
         
-        print("🧠 Vexion-LM: ", end="", flush=True)
+        print("Vexion-LM: ", end="", flush=True)
         generate(
             model, tokenizer, full_prompt, 
             max_new_tokens=args.max_new_tokens,
