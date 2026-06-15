@@ -1,4 +1,4 @@
-# Vexion-LM 🧠
+# Vexion-LM 
 
 **Vexion-LM** — это семейство открытых языковых моделей, созданных с нуля. Проект включает в себя полный пайплайн: от написания кастомной архитектуры на PyTorch до претрейна базовых моделей и их последующего дообучения под диалоговый формат с использованием LoRA-адаптеров.
 
@@ -72,7 +72,7 @@ python train.py --data_path train.txt --total_steps 40000 --embed_dim 768 --n_la
 ```
 python train.py --data_path train.bin --val_path val.bin --total_steps 40000 --save_every 1000 --batch_size 4 --accumulate_steps 16 --embed_dim 768 --n_layers 12 --n_heads 12 --max_seq_len 1024 --lr 1e-4 --vocab_size 40960
 ```
-**⚙️Разбор параметров запуска**
+**Разбор параметров запуска**
 **Внимательно настройте эти параметры под свою видеокарту, иначе вы рискуете получить ошибку OUT OF MEMORY (нехватка VRAM):**
 * --data_path и --val_path - пути к вашим сгенерированным .bin файлам (обучение и валидация). Валидация строго рекомендуется!
 * --total_steps - сколько всего градиентных шагов сделает модель до завершения.
@@ -95,7 +95,7 @@ cd C:\Users\YourName\Desktop\FileName
 
 Для диалогового текста: python generate.py --checkpoint checkpoints/Vexion-LM_mini_lora.safetensors --prompt "[CLS] Что такое человек [SEP] " --temperature 0.7 --device cuda --use_lora
 
-📝 Правила написания промпта (prompt):
+Правила написания промпта (prompt):
 [CLS] — спецтокен начала вашего запроса. После него пишите свой вопрос.
 
 [SEP] — спецтокен начала ответа ИИ. После этого токена нельзя писать никакой текст, иначе модель сломает логику ответа!
